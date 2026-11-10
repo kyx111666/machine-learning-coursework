@@ -21,7 +21,6 @@
 | `ablation_initial.py` | 初始配方下的消融、学习率与分辨率实验，以及初始 ResNet18 对照 |
 | `train_model_comparison.py` | 已完成的 ResNet50 迁移学习对照实验 |
 | `blend.py` | 固定权重融合、五折完整性与图像/ID/划分校验 |
-| `analyze_results.py` | 模型对比、消融表、超参数曲线、EMA/TTA 对比、学习曲线、混淆矩阵 |
 | `cli.py` | 训练程序共享的运行组与输入输出参数 |
 | `notebooks/` | 可独立上传 Kaggle 的训练及实验 Notebook |
 | `tests/` | 概率融合、分组校验、模型接口与合成数据流程检查 |
@@ -152,19 +151,11 @@ python train_model_comparison.py --input input --out outputs
 
 初始配方排除了 11 张近纯色图，最终五折配方保留全部训练图，二者的划分不同。各配方内使用同一验证折进行组件比较；初始与最终配方的绝对分数不作为同一验证集上的逐图配对比较。
 
-## 结果分析
-
-```bash
-python analyze_results.py --results outputs --out analysis --ensemble seeds
-```
-
-分析程序读取训练输出，生成模型对比表、EMA/TTA 对比表、配对消融表、超参数表及相应图，包含逐折学习曲线和融合混淆矩阵。配对区间按重复/镜像组做 5,000 次 bootstrap，固定种子 2026。同组折被多次用于模型选择，区间只表示本次固定预测上的探索性差异。
-
 ## Kaggle Notebook
 
 `notebooks/train_pretrained.ipynb` 在最后一格修改 `RUN`，即可运行各预训练家族或 VGG；`train_resnet32.ipynb` 可分别选择两个种子。`train_single_resnet32.ipynb` 对应单模型留出方案。另有初始消融、最终消融和模型对比 Notebook。
 
-只需添加官方 `2026task2` 数据；预训练模型开启 GPU 和 Internet，从零模型开启 GPU 即可。各 Notebook 输出 `task2/<运行组>/`。收集到本地时保留运行组目录名，放入统一 `outputs/` 目录，再运行融合及分析命令。
+只需添加官方 `2026task2` 数据；预训练模型开启 GPU 和 Internet，从零模型开启 GPU 即可。各 Notebook 输出 `task2/<运行组>/`。收集到本地时保留运行组目录名，放入统一 `outputs/` 目录，再运行融合命令。
 
 Notebook 由仓库根目录的 `python tools/build_task2_notebooks.py` 生成。
 

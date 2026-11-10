@@ -73,14 +73,6 @@ def main():
                     assert '已完成，复用结果' in again.stdout
                     assert files[0].read_bytes() == before
             print(f'{script}: {run} passed', flush=True)
-        analysis = subprocess.run([sys.executable, str(ROOT / 'analyze_results.py'), '--results',
-                                   str(work / 'out_ablation'), '--out', str(work / 'analysis')],
-                                  env=env, capture_output=True, text=True, timeout=180)
-        if analysis.returncode:
-            raise RuntimeError(analysis.stderr[-3000:])
-        assert (work / 'analysis' / 'ablation_comparison.csv').is_file()
-        assert (work / 'analysis' / 'ablation_initial.png').is_file()
-        print('Analysis tables and figures passed', flush=True)
 
 
 if __name__ == '__main__':

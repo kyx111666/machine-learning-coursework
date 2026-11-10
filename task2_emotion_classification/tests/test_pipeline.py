@@ -15,7 +15,6 @@ import torch.nn.functional as F
 import timm
 
 import blend
-from analyze_results import paired_interval
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -85,10 +84,6 @@ class PipelineTests(unittest.TestCase):
             index.to_csv(root / 'train_index.csv', index=False)
             with self.assertRaisesRegex(ValueError, 'group crosses'):
                 blend.read_cv_run(root, experiment)
-
-    def test_group_bootstrap_identity(self):
-        correct = np.array([True, False, True, False])
-        self.assertEqual(paired_interval(correct, correct, np.array([0, 0, 1, 1]), draws=20), (0, 0, 0))
 
     def test_local_scratch_model_and_ema_forward(self):
         torch.set_num_threads(1)
