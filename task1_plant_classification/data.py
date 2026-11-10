@@ -55,9 +55,10 @@ def find_data(root):
     test = sorted((roots[0] / "test").glob("*.png"))
     if len(test) != 378 or len({p.name for p in train}) != 500:
         raise ValueError("Expected 500 distinct training filenames and 378 test images")
-    template_path = roots[0] / "submission-for-task2.csv"
-    if not template_path.is_file():
-        raise FileNotFoundError(f"Official template missing: {template_path}")
+    template_paths = sorted(root.rglob("submission-for-task2.csv"))
+    if len(template_paths) != 1:
+        raise FileNotFoundError(f"Expected one official submission-for-task2.csv; found {len(template_paths)}")
+    template_path = template_paths[0]
     template = pd.read_csv(template_path, dtype={"ID": str})
     if (set(template.columns) != {"ID", "Category"} or len(template) != 378
             or not template.ID.is_unique or set(template.ID) != {p.name for p in test}):

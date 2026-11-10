@@ -108,6 +108,12 @@ class PipelineTests(unittest.TestCase):
             loaded, _, _, template = data.load_inputs(path, root)
             self.assertEqual(set(loaded), set(bundle))
             self.assertEqual(template.ID.tolist(), self.ids[::-1].tolist())
+            nested = root / 'dataset-for-task2' / 'dataset-for-task2'
+            nested.mkdir(parents=True)
+            (root / 'train').rename(nested / 'train')
+            (root / 'test').rename(nested / 'test')
+            data.load_inputs(path, root)
+            test = sorted((nested / 'test').glob('*.png'))
             Image.new('RGB', (4, 5), (220, 20, 30)).save(test[0])
             with self.assertRaisesRegex(ValueError, 'image content'):
                 data.load_inputs(path, root)

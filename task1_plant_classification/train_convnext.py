@@ -200,6 +200,10 @@ def main(argv=None):
     train_files, test_files, sample_submission = find_data(args.data)
     train_labels = np.repeat(np.arange(5), 100)
     folds = fold_ids(train_labels)
+    # Keep the model summary initialization in the original training RNG sequence.
+    preview = make_model()
+    print(f'ConvNeXt-Tiny parameters: {sum(p.numel() for p in preview.parameters()):,}')
+    del preview
     test_loader = DataLoader(
         PlantDataset(test_files, transform=valid_tf),
         batch_size=BATCH_SIZE,

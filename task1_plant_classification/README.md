@@ -4,6 +4,15 @@
 
 最终方案包含三步：ConvNeXt-Tiny 五折训练、DINOv2-Base 五折部分微调、DINOv2-Base 全数据三种子重训。所有类别的概率顺序为：Black-grass、Common wheat、Loose Silky-bent、Scentless Mayweed、Sugar beet。
 
+## 最终选用的两套方案
+
+| 最终选用方案 | Kaggle 分数 | 运行入口 | 生成的提交文件 |
+| --- | ---: | --- | --- |
+| ConvNeXt-Tiny 与 DINOv2-Base 五折等权融合 | **0.9708** | 依次运行 `train_convnext.py`、`train_dinov2.py` | `outputs/submission_cv_blend.csv` |
+| 五折融合与全数据三种子 DINOv2-Base 等权融合 | **0.9735** | 完成前两步后运行 `train_ensemble.py` | `outputs/submission.csv` |
+
+两套方案共用同一组 ConvNeXt 与 DINOv2 五折模型，第二套进一步加入全数据重训模型。下文消融实验用于分析各组件。
+
 ## 代码结构
 
 | 文件 | 用途 |
@@ -23,13 +32,15 @@
 ```text
 data/
 └── 2026task1/
-    ├── train/
-    │   ├── Black-grass/          # 100 张 PNG
-    │   ├── Common wheat/         # 100 张 PNG
-    │   ├── Loose Silky-bent/     # 100 张 PNG
-    │   ├── Scentless Mayweed/    # 100 张 PNG
-    │   └── Sugar beet/           # 100 张 PNG
-    ├── test/                    # 378 张 PNG
+    ├── dataset-for-task2/
+    │   └── dataset-for-task2/
+    │       ├── train/
+    │       │   ├── Black-grass/          # 100 张 PNG
+    │       │   ├── Common wheat/         # 100 张 PNG
+    │       │   ├── Loose Silky-bent/     # 100 张 PNG
+    │       │   ├── Scentless Mayweed/    # 100 张 PNG
+    │       │   └── Sugar beet/           # 100 张 PNG
+    │       └── test/                    # 378 张 PNG
     └── submission-for-task2.csv
 ```
 
@@ -44,7 +55,7 @@ python train_dinov2.py --data data --out outputs
 python train_ensemble.py --data data --out outputs
 ```
 
-三步共享同一个输出目录，分别生成 `convnext_probabilities.npz`、`dinov2_cv_probabilities.npz` 和最终的 `submission.csv`。提交行顺序严格跟随官方模板。
+三步共享同一个输出目录。第二步生成五折融合提交 `outputs/submission_cv_blend.csv`（对应 0.9708 方案），第三步生成最终融合提交 `outputs/submission.csv`（对应 0.9735 方案）。中间概率分别保存在 `convnext_probabilities.npz` 和 `dinov2_cv_probabilities.npz`；提交行顺序严格跟随官方模板。
 
 已有同配方、同五折划分的五个 ConvNeXt checkpoint 时，可在第一步增加 `--weights checkpoint_directory`，读取 `convnext_fold1.pth` 至 `convnext_fold5.pth` 重新计算概率。DINOv2 两步会保存逐轮训练状态及已完成的预测，在相同输入和配置下可从相同输出目录继续运行。
 
@@ -56,9 +67,9 @@ python train_ensemble.py --data data --out outputs
 2. `notebooks/train_dinov2.ipynb`：添加竞赛数据和第一步保存的 `convnext_probabilities.npz`。
 3. `notebooks/train_ensemble.ipynb`：添加竞赛数据和前两步的两个概率文件。
 
-概率文件可通过前一步 Notebook Output 或自己创建的 Dataset 添加到 Input。每步只挂一个所需文件的来源，避免重复命名。最终下载 `/kaggle/working/submission.csv`。
+概率文件可通过前一步 Notebook Output 或自己创建的 Dataset 添加到 Input。每步只挂一个所需文件的来源，避免重复命名。第二步下载 `/kaggle/working/submission_cv_blend.csv`，第三步下载 `/kaggle/working/submission.csv`。
 
-Notebook 由仓库根目录的 `python tools/build_notebooks.py` 生成；均不含运行输出或预先打包的特征和预测。
+Notebook 由仓库根目录的 `python tools/build_notebooks.py` 生成。
 
 ## 模型与融合
 
@@ -83,8 +94,8 @@ DINOv2 使用带 register tokens 的 ViT-B/14。拼接 CLS 和 patch 均值特�
 | --- | ---: | ---: |
 | ConvNeXt-Tiny 五折 | 0.938 | 0.9629 |
 | DINOv2-Base 五折 | 0.956 | — |
-| ConvNeXt + DINOv2 五折融合 | 0.960 | 0.9708 |
-| 五折融合 + 全数据三种子重训 | — | **0.9735** |
+| **最终选用：ConvNeXt + DINOv2 五折融合** | 0.960 | **0.9708** |
+| **最终选用：五折融合 + 全数据三种子重训** | — | **0.9735** |
 | 补充实验的 timm DINOv2-Base | 0.966 | 0.9656 |
 
 补充实验中的 timm DINOv2 使用不同的分类头和训练细节，不等同于最终模型的严格复现。多次使用同一组折进行方案比较，OOF 只能作为探索性验证；重新训练也可能因随机性和软件环境得到不同结果。
@@ -105,5 +116,3 @@ python ablation.py --data data --out results --exp dinov2_base_partial
 ```bash
 python -m unittest discover -s tests -v
 ```
-
-发布整理已用合成数据检查训练边界、固定融合、输入校验和断点恢复；未重新执行完整的 Kaggle GPU 训练。
